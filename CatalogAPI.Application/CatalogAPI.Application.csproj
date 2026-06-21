@@ -7,16 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Abstractions\Services\" />
-    <Folder Include="Abstractions\Repositories\" />
-    <Folder Include="Abstractions\Persistence\" />
-    <Folder Include="Contracts\DomainErrors\" />
-    <Folder Include="Contracts\Dto\" />
-    <Folder Include="Validators\" />
-    <Folder Include="Services\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="FluentAssertions" Version="8.0.0" />
     <PackageReference Include="FluentValidation" Version="11.11.0" />
