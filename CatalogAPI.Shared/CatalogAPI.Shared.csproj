@@ -7,12 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Helpers\" />
-    <Folder Include="Identity\" />
-    <Folder Include="Logging\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="FluentAssertions" Version="8.0.0" />
     <PackageReference Include="FluentValidation" Version="11.11.0" />
