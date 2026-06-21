@@ -38,11 +38,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Validators\" />
-    <Folder Include="Services\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\CatalogAPI.Application\CatalogAPI.Application.csproj" />
     <ProjectReference Include="..\CatalogAPI.Infrastructure\CatalogAPI.Infrastructure.csproj" />
   </ItemGroup>
