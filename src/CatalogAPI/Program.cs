@@ -1,25 +1,65 @@
+using CatalogAPI.Extensions;
+using CatalogAPI.Extensions.ExtensionsLogs;
+using CatalogAPI.Infrastructure.Connections;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.AddControllersWithViews();
+builder.Services.AddSession();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddApplicationServices(builder.Configuration);
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+LogExtension.InitializeLogger();
+var loggerSerialLog = LogExtension.GetLogger();
+loggerSerialLog.Information("Logging initialized.");
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+app.UseMiddleware<ExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "FCG Catalog API v1");
+    });
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
+app.UseRouting();
+
+app.UseCors("CorsPolicy");
+
+app.UseSession();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+var runMigrations = builder.Configuration.GetValue<bool>("RunMigrations");
+
+if (runMigrations)
+{
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+
+    try
+    {
+        var context = services.GetRequiredService<DataContext>();
+        context.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred during migration!");
+    }
+}
 
 app.Run();

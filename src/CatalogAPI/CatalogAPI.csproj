@@ -28,12 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-    <Folder Include="Extensions\ExtensionsLogs\" />
-    <Folder Include="Extensions\SwaggerDocumentation\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\CatalogAPI.Application\CatalogAPI.Application.csproj" />
     <ProjectReference Include="..\..\CatalogAPI.Infrastructure\CatalogAPI.Infrastructure.csproj" />
   </ItemGroup>
