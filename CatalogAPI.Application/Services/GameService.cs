@@ -28,6 +28,7 @@ namespace CatalogAPI.Application.Services
                 {
                     Name = gameResponse.Name,
                     Description = gameResponse.Description,
+                    Price = gameResponse.Price,
                     CreateDate = DateTime.UtcNow,
                     IsActive = true
                 };

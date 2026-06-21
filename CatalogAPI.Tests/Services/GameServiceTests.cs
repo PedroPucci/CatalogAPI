@@ -216,10 +216,9 @@ namespace CatalogAPI.Tests.Services
             {
                 new GameResponseDto
                 {
-                    Id = 1,
                     Name = "God of War",
                     Description = "Action game",
-                    Price = 99.90m,
+                    Price = 99.9,
                     IsActive = true
                 }
             };

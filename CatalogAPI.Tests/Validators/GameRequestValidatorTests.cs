@@ -82,7 +82,7 @@ namespace CatalogAPI.Tests.Validators
             {
                 Name = "Game Teste",
                 Description = "Descrição válida para o jogo",
-                Price = 99.90m,
+                Price = 99.9,
                 IsActive = true
             };
 
