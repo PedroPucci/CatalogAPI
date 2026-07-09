@@ -1,9 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>8225bba1-0a4b-44e9-8fdf-152adbc3d728</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..</DockerfileContext>
+    <DockerComposeProjectPath>..\..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,8 +32,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\CatalogAPI.Application\CatalogAPI.Application.csproj" />
-    <ProjectReference Include="..\..\CatalogAPI.Infrastructure\CatalogAPI.Infrastructure.csproj" />
+	  <ProjectReference Include="..\..\CatalogAPI.Application\CatalogAPI.Application.csproj" />
+	  <ProjectReference Include="..\..\CatalogAPI.Infrastructure\CatalogAPI.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

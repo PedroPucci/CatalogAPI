@@ -12,4 +12,7 @@
   <Folder Name="/tests/">
     <Project Path="CatalogAPI.Tests/CatalogAPI.Tests.csproj" Id="805c3bb1-ccd1-443d-a440-29ca4d6f0e40" />
   </Folder>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
 </Solution>
