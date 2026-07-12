@@ -10,6 +10,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      RabbitMq__Host: "host.docker.internal"
+      RabbitMq__Username: "guest"
+      RabbitMq__Password: "guest"
       RunMigrations: "true"
       ConnectionStrings__WebApiDatabase: "Server=catalog-sqlserver;Database=FCGGameCatalog;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
       JwtSettings__Issuer: "PedroIghor"

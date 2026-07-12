@@ -3,6 +3,7 @@ using CatalogAPI.Extensions.ExtensionsLogs;
 using CatalogAPI.Infrastructure.Connections;
 using Microsoft.EntityFrameworkCore;
 using CatalogAPI.Messaging;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,30 @@ builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddScoped<OrderPlacedEventPublisher>();
+
+var rabbitMqHost =
+    builder.Configuration["RabbitMq:Host"]
+    ?? "localhost";
+
+var rabbitMqUsername =
+    builder.Configuration["RabbitMq:Username"]
+    ?? "guest";
+
+var rabbitMqPassword =
+    builder.Configuration["RabbitMq:Password"]
+    ?? "guest";
+
+builder.Services.AddMassTransit(configuration =>
+{
+    configuration.UsingRabbitMq((context, rabbitMq) =>
+    {
+        rabbitMq.Host(rabbitMqHost, "/", host =>
+        {
+            host.Username(rabbitMqUsername);
+            host.Password(rabbitMqPassword);
+        });
+    });
+});
 
 LogExtension.InitializeLogger();
 var loggerSerialLog = LogExtension.GetLogger();
