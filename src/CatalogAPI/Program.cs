@@ -2,6 +2,7 @@ using CatalogAPI.Extensions;
 using CatalogAPI.Extensions.ExtensionsLogs;
 using CatalogAPI.Infrastructure.Connections;
 using Microsoft.EntityFrameworkCore;
+using CatalogAPI.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddApplicationServices(builder.Configuration);
+builder.Services.AddScoped<OrderPlacedEventPublisher>();
 
 LogExtension.InitializeLogger();
 var loggerSerialLog = LogExtension.GetLogger();

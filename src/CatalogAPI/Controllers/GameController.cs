@@ -1,10 +1,10 @@
 ﻿using CatalogAPI.Application.Abstractions.Persistence;
 using CatalogAPI.Application.Contracts.Dto;
 using CatalogAPI.Domain.Entities;
+using CatalogAPI.Messaging;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Reqnroll.Formatters.PayloadProcessing.Cucumber;
 using System.Net.Mime;
 using System.Security.Claims;
 
@@ -16,55 +16,55 @@ namespace CatalogAPI.Controllers
     public class GameController : ControllerBase
     {
         private readonly IUnitOfWorkService _uow;
+        private readonly OrderPlacedEventPublisher _orderPlacedEventPublisher;
 
-        public GameController(IUnitOfWorkService uow)
+        public GameController(
+            IUnitOfWorkService uow,
+            OrderPlacedEventPublisher orderPlacedEventPublisher)
         {
             _uow = uow;
+            _orderPlacedEventPublisher = orderPlacedEventPublisher;
         }
 
         [Authorize(Roles = "Administrator")]
-        [HttpPost]
-        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Add([FromBody] GameResponseDto gameResponse)
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrWhiteSpace(userId))
-                return Unauthorized("Usuário não autenticado.");
-
-            var result = await _uow.GameService.Add(gameResponse, userId);
-            return Ok(result);
-        }
-
         [HttpPost("{gameId:int}/purchase")]
-        [Authorize]
-        [ProducesResponseType(typeof(PurchaseResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Purchase([FromRoute] int gameId)
         {
             var result = await _uow.GameService.GetById(gameId);
 
-            if (result is null || result.Data is null)
-                return NotFound();
+            if (!result.Success || result.Data is null)
+                return NotFound(result);
 
             var game = result.Data;
 
             if (!game.IsActive)
                 return BadRequest("Game is not active.");
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
 
-            return Ok(new PurchaseResponseDto
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized("Usuário não autenticado.");
+
+            if (string.IsNullOrWhiteSpace(email))
+                return BadRequest("E-mail do usuário não encontrado no token.");
+
+            await _orderPlacedEventPublisher.Publish(
+                userId,
+                email,
+                game.Id,
+                (decimal)game.Price);
+
+            return Ok(new
             {
                 UserId = userId,
                 GameId = game.Id,
                 Price = game.Price,
-                Status = "PurchaseStarted",
-                CreateDate = DateTime.UtcNow
+                Status = "OrderPlaced"
             });
         }
 
