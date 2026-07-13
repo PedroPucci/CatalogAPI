@@ -27,6 +27,32 @@ namespace CatalogAPI.Controllers
         }
 
         [Authorize(Roles = "Administrator")]
+        [HttpPost]
+        [Consumes(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(typeof(GameEntity), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> Add([FromBody] CreateGameRequestDto gameResponse)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized("Usuário não autenticado.");
+
+            var result = await _uow.GameService.Add(
+                gameResponse,
+                userId);
+
+            if (!result.Success || result.Data is null)
+                return BadRequest(result);
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = result.Data.Id },
+                result);
+        }
+
         [HttpPost("{gameId:int}/purchase")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

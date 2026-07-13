@@ -18,7 +18,7 @@ namespace CatalogAPI.Application.Services
             _repositoryUoW = repositoryUoW;
         }
 
-        public async Task<Result<GameEntity>> Add(GameResponseDto gameResponse, string userId)
+        public async Task<Result<GameEntity>> Add(CreateGameRequestDto gameResponse,string userId)
         {
             using var transaction = _repositoryUoW.BeginTransaction();
 
@@ -33,23 +33,22 @@ namespace CatalogAPI.Application.Services
                     IsActive = true
                 };
 
-                var isValid = await IsValidGameRequest(gameEntity);
-                if (!isValid.Success)
-                    return Result<GameEntity>.Error(isValid.Message);
+                var validationResult = await IsValidGameRequest(gameEntity);
 
-                await _repositoryUoW.GameRepository.Add(gameEntity);
-                await _repositoryUoW.SaveAsync();
-                Log.Information(LogMessages.AddingGameSuccess(gameEntity));
-                var userGameEntity = new UserGameEntity
+                if (!validationResult.Success)
                 {
-                    UserId = userId,
-                    GameId = gameEntity.Id
-                };
+                    await transaction.RollbackAsync();
+                    Log.Warning(LogMessages.InvalidGameInputs());
+                    return Result<GameEntity>.Error(validationResult.Message);
+                }
 
-                await _repositoryUoW.UserGameRepository.Add(userGameEntity);
+                var savedGame = await _repositoryUoW.GameRepository.Add(gameEntity);
+
                 await _repositoryUoW.SaveAsync();
                 await transaction.CommitAsync();
-                return Result<GameEntity>.Ok(gameEntity);
+
+                Log.Information(LogMessages.AddingGameSuccess(savedGame));
+                return Result<GameEntity>.Ok(savedGame);
             }
             catch (Exception ex)
             {
@@ -174,8 +173,13 @@ namespace CatalogAPI.Application.Services
 
                 var gameResponse = new GameResponseDto
                 {
-                    Name = game.Name,
-                    Description = game.Description
+                    Id = game.Id,
+                    Name = game.Name ?? string.Empty,
+                    Description = game.Description,
+                    Price = game.Price,
+                    IsActive = game.IsActive,
+                    CreateDate = game.CreateDate,
+                    ModificationDate = game.ModificationDate
                 };
 
                 _repositoryUoW.Commit();

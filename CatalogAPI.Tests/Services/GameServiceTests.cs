@@ -52,7 +52,7 @@ namespace CatalogAPI.Tests.Services
                 .Setup(x => x.SaveAsync())
                 .Returns(Task.CompletedTask);
 
-            var gameResponse = new GameResponseDto
+            var gameResponse = new CreateGameRequestDto
             {
                 Name = "God of War",
                 Description = "Action game"
@@ -75,7 +75,7 @@ namespace CatalogAPI.Tests.Services
         [Fact]
         public async Task Add_Should_Return_Error_When_Game_Is_Invalid()
         {
-            var gameResponse = new GameResponseDto
+            var gameResponse = new CreateGameRequestDto
             {
                 Name = "",
                 Description = ""

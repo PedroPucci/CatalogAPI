@@ -3,35 +3,63 @@ services:
     build:
       context: .
       dockerfile: src/CatalogAPI/Dockerfile
-    image: catalogapi
-    container_name: catalogapi
+
+    image: catalog-api
+    container_name: catalog-api
+
     ports:
       - "8081:8080"
+
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+
+      RunMigrations: "true"
+
+      ConnectionStrings__WebApiDatabase: "Server=catalog-sqlserver,1433;Database=FCGGameCatalog;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False;"
+
       RabbitMq__Host: "host.docker.internal"
       RabbitMq__Username: "guest"
       RabbitMq__Password: "guest"
-      RunMigrations: "true"
-      ConnectionStrings__WebApiDatabase: "Server=catalog-sqlserver;Database=FCGGameCatalog;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
+
       JwtSettings__Issuer: "PedroIghor"
       JwtSettings__Audience: "https://localhost:5001"
       JwtSettings__SecretKey: "EAA4Cf4JnqYwBP9MSZC8cHvMSvmShHZBU27qQxZBS3ORNSoIdEz3me0QHZABLNBiEWtDmVLZBVeMF8QZCd"
       JwtSettings__ExpirationInMinutes: "60"
+
     depends_on:
-      - catalog-sqlserver
+      catalog-sqlserver:
+        condition: service_healthy
+
+    restart: unless-stopped
 
   catalog-sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: catalog-sqlserver
+
     ports:
       - "1434:1433"
+
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "YourStrong!Passw0rd"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+
     volumes:
       - catalog_sqlserver_data:/var/opt/mssql
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+    restart: unless-stopped
 
 volumes:
   catalog_sqlserver_data:

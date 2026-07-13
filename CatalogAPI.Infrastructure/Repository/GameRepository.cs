@@ -48,8 +48,13 @@ namespace CatalogAPI.Infrastructure.Repository
             .OrderBy(game => game.Id)
             .Select(game => new GameResponseDto
             {
-                Name = game.Name,
-                Description = game.Description
+                Id = game.Id,
+                Name = game.Name ?? string.Empty,
+                Description = game.Description,
+                Price = game.Price,
+                IsActive = game.IsActive,
+                CreateDate = game.CreateDate,
+                ModificationDate = game.ModificationDate
             })
             .ToListAsync();
         }
