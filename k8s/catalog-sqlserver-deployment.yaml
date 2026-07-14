@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-sqlserver
+  namespace: fcg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-sqlserver
+  template:
+    metadata:
+      labels:
+        app: catalog-sqlserver
+    spec:
+      containers:
+        - name: catalog-sqlserver
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          ports:
+            - containerPort: 1433
+
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+
+            - name: MSSQL_PID
+              value: "Developer"
+
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: catalog-api-secret
+                  key: MSSQL_SA_PASSWORD
+
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2"
+
+          readinessProbe:
+            tcpSocket:
+              port: 1433
+            initialDelaySeconds: 25
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 10
+
+          livenessProbe:
+            tcpSocket:
+              port: 1433
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+
+          volumeMounts:
+            - name: catalog-sqlserver-data
+              mountPath: /var/opt/mssql
+
+      volumes:
+        - name: catalog-sqlserver-data
+          persistentVolumeClaim:
+            claimName: catalog-sqlserver-pvc

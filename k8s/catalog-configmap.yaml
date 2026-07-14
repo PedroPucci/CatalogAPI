@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: catalog-api-config
+  namespace: fcg
+data:
+  ASPNETCORE_ENVIRONMENT: "Development"
+  ASPNETCORE_HTTP_PORTS: "8080"
+  RunMigrations: "true"
+
+  RabbitMq__Host: "rabbitmq"
+
+  JwtSettings__Issuer: "PedroIghor"
+  JwtSettings__Audience: "https://localhost:5001"
+  JwtSettings__ExpirationInMinutes: "60"

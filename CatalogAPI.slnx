@@ -2,11 +2,28 @@
   <Folder Name="/docs/">
     <File Path="docs/TC NETT - Fase 2.pdf" />
   </Folder>
+  <Folder Name="/k8s/">
+    <File Path="catalog-api-deployment.yaml" />
+    <File Path="catalog-api-service.yaml" />
+    <File Path="catalog-configmap.yaml" />
+    <File Path="catalog-secret.yaml" />
+    <File Path="catalog-sqlserver-deployment.yaml" />
+    <File Path="catalog-sqlserver-pvc.yaml" />
+    <File Path="catalog-sqlserver-service.yaml" />
+  </Folder>
   <Folder Name="/src/">
-    <Project Path="CatalogAPI.Application/CatalogAPI.Application.csproj" Id="a57fa235-5af5-45ad-844d-a62e9a0c664f" />
-    <Project Path="CatalogAPI.Domain/CatalogAPI.Domain.csproj" Id="865ace95-d6b4-40ac-82e6-b2d128342ab7" />
-    <Project Path="CatalogAPI.Infrastructure/CatalogAPI.Infrastructure.csproj" Id="d3c2a674-9146-498c-a0ba-92f3c10e3595" />
-    <Project Path="CatalogAPI.Shared/CatalogAPI.Shared.csproj" Id="16bf229d-088a-466c-887c-e16461127343" />
+    <Project Path="CatalogAPI.Application/CatalogAPI.Application.csproj" Id="a57fa235-5af5-45ad-844d-a62e9a0c664f">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
+    <Project Path="CatalogAPI.Domain/CatalogAPI.Domain.csproj" Id="865ace95-d6b4-40ac-82e6-b2d128342ab7">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
+    <Project Path="CatalogAPI.Infrastructure/CatalogAPI.Infrastructure.csproj" Id="d3c2a674-9146-498c-a0ba-92f3c10e3595">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
+    <Project Path="CatalogAPI.Shared/CatalogAPI.Shared.csproj" Id="16bf229d-088a-466c-887c-e16461127343">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
     <Project Path="src/CatalogAPI/CatalogAPI.csproj" />
   </Folder>
   <Folder Name="/tests/">
