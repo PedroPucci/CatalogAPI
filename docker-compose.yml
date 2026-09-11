@@ -18,6 +18,9 @@ services:
 
       ConnectionStrings__WebApiDatabase: "Server=catalog-sqlserver,1433;Database=FCGGameCatalog;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False;"
 
+      MongoDbSettings__ConnectionString: "mongodb://root:YourStrongMongoPass@catalog-mongodb:27017/?authSource=admin"
+      MongoDbSettings__DatabaseName: "FCGGameCatalogMongo"
+
       RabbitMq__Host: "host.docker.internal"
       RabbitMq__Username: "guest"
       RabbitMq__Password: "guest"
@@ -31,7 +34,11 @@ services:
       catalog-sqlserver:
         condition: service_healthy
 
+      catalog-mongodb:
+        condition: service_started
+
     restart: unless-stopped
+
 
   catalog-sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -61,5 +68,24 @@ services:
 
     restart: unless-stopped
 
+
+  catalog-mongodb:
+    image: mongo:8
+    container_name: catalog-mongodb
+
+    ports:
+      - "27017:27017"
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: YourStrongMongoPass
+
+    volumes:
+      - catalog_mongodb_data:/data/db
+
+    restart: unless-stopped
+
+
 volumes:
   catalog_sqlserver_data:
+  catalog_mongodb_data:

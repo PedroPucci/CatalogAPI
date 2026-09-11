@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using CatalogAPI.Application.Contracts.DomainErrors;
+using Microsoft.Data.SqlClient;
 using Serilog;
 
 namespace CatalogAPI.Extensions
@@ -24,25 +25,45 @@ namespace CatalogAPI.Extensions
             }
         }
 
-        private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+        private static Task HandleExceptionAsync(
+            HttpContext context,
+            Exception exception)
         {
-
             context.Response.StatusCode = exception switch
             {
-                SqlException => StatusCodes.Status503ServiceUnavailable,
-                _ => StatusCodes.Status500InternalServerError,
+                GameCatalogAlreadyExistsException =>
+                    StatusCodes.Status409Conflict,
+
+                SqlException =>
+                    StatusCodes.Status503ServiceUnavailable,
+
+                _ =>
+                    StatusCodes.Status500InternalServerError
             };
 
             context.Response.ContentType = "application/json";
 
-            Log.Error(exception, "An error occurred while processing the request. StatusCode: {StatusCode}", context.Response.StatusCode);
+            Log.Error(
+                exception,
+                "An error occurred while processing the request. StatusCode: {StatusCode}",
+                context.Response.StatusCode);
+
+            var message = exception switch
+            {
+                GameCatalogAlreadyExistsException =>
+                    exception.Message,
+
+                SqlException =>
+                    "The database is currently unavailable. Please try again later.",
+
+                _ =>
+                    "An unexpected error occurred. Please contact support if the problem persists."
+            };
 
             return context.Response.WriteAsJsonAsync(new
             {
                 StatusCode = context.Response.StatusCode,
-                Message = context.Response.StatusCode == StatusCodes.Status503ServiceUnavailable
-                    ? "The database is currently unavailable. Please try again later."
-                    : "An unexpected error occurred. Please contact support if the problem persists."
+                Message = message
             });
         }
     }

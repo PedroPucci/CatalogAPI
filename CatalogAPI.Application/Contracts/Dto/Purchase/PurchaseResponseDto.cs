@@ -1,4 +1,4 @@
-﻿namespace CatalogAPI.Application.Contracts.Dto
+﻿namespace CatalogAPI.Application.Contracts.Dto.Purchase
 {
     public class PurchaseResponseDto
     {

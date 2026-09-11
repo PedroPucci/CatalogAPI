@@ -1,10 +1,10 @@
-﻿namespace CatalogAPI.Application.Contracts.Dto
+﻿namespace CatalogAPI.Application.Contracts.Dto.Game
 {
-    public class UpdateGameRequestDto
+    public class CreateGameRequestDto
     {
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public double Price { get; set; }
-        public bool IsActive { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }

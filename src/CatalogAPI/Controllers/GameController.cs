@@ -1,5 +1,5 @@
 ﻿using CatalogAPI.Application.Abstractions.Persistence;
-using CatalogAPI.Application.Contracts.Dto;
+using CatalogAPI.Application.Contracts.Dto.Game;
 using CatalogAPI.Domain.Entities;
 using CatalogAPI.Messaging;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

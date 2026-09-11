@@ -1,4 +1,4 @@
-﻿using CatalogAPI.Application.Contracts.Dto;
+﻿using CatalogAPI.Application.Contracts.Dto.Game;
 using CatalogAPI.Domain.Common;
 using CatalogAPI.Domain.Entities;
 

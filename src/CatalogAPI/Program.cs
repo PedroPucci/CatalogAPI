@@ -1,11 +1,20 @@
+using CatalogAPI.Application.Abstractions.Persistence;
 using CatalogAPI.Extensions;
 using CatalogAPI.Extensions.ExtensionsLogs;
 using CatalogAPI.Infrastructure.Connections;
-using Microsoft.EntityFrameworkCore;
+using CatalogAPI.Infrastructure.MongoDB;
 using CatalogAPI.Messaging;
 using MassTransit;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<MongoDbSettings>(
+    builder.Configuration.GetSection("MongoDbSettings"));
+
+builder.Services.AddSingleton<MongoDbContext>();
+builder.Services.AddScoped<MongoDbInitializer>();
+builder.Services.AddScoped<IGameCatalogRepository, GameCatalogRepository>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession();
@@ -43,6 +52,14 @@ loggerSerialLog.Information("Logging initialized.");
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var mongoInitializer =
+        scope.ServiceProvider.GetRequiredService<MongoDbInitializer>();
+
+    await mongoInitializer.InitializeAsync();
+}
+
 app.UseMiddleware<ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
@@ -50,7 +67,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "FCG Catalog API v1");
+        c.SwaggerEndpoint(
+            "/swagger/v1/swagger.json",
+            "FCG Catalog API v1");
     });
 }
 
@@ -70,7 +89,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-var runMigrations = builder.Configuration.GetValue<bool>("RunMigrations");
+var runMigrations =
+    builder.Configuration.GetValue<bool>("RunMigrations");
 
 if (runMigrations)
 {
@@ -79,13 +99,19 @@ if (runMigrations)
 
     try
     {
-        var context = services.GetRequiredService<DataContext>();
+        var context =
+            services.GetRequiredService<DataContext>();
+
         context.Database.Migrate();
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred during migration!");
+        var logger =
+            services.GetRequiredService<ILogger<Program>>();
+
+        logger.LogError(
+            ex,
+            "An error occurred during migration!");
     }
 }
 

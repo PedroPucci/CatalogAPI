@@ -1,6 +1,6 @@
 ﻿using CatalogAPI.Application.Abstractions.Persistence;
 using CatalogAPI.Application.Abstractions.Services;
-using CatalogAPI.Application.Contracts.Dto;
+using CatalogAPI.Application.Contracts.Dto.Game;
 using CatalogAPI.Application.Validators;
 using CatalogAPI.Domain.Common;
 using CatalogAPI.Domain.Entities;

@@ -1,5 +1,5 @@
 ﻿using CatalogAPI.Application.Abstractions.Repositories;
-using CatalogAPI.Application.Contracts.Dto;
+using CatalogAPI.Application.Contracts.Dto.Game;
 using CatalogAPI.Domain.Entities;
 using CatalogAPI.Infrastructure.Connections;
 using Microsoft.EntityFrameworkCore;

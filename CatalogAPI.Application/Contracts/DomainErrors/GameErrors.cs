@@ -15,5 +15,8 @@ namespace CatalogAPI.Application.Contracts.DomainErrors
 
         [Description("'Description' must be at least 8 characters long!")]
         Game_Error_DescriptionLengthLessEight,
+
+        [Description("A catalog entry for this GameId already exists.")]
+        Game_Error_CatalogAlreadyExists
     }
 }
