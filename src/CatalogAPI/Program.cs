@@ -16,6 +16,14 @@ builder.Services.AddSingleton<MongoDbContext>();
 builder.Services.AddScoped<MongoDbInitializer>();
 builder.Services.AddScoped<IGameCatalogRepository, GameCatalogRepository>();
 
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration =
+        builder.Configuration["Redis:ConnectionString"];
+
+    options.InstanceName = "FCG:Catalog:";
+});
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
@@ -47,15 +55,20 @@ builder.Services.AddMassTransit(configuration =>
 });
 
 LogExtension.InitializeLogger();
-var loggerSerialLog = LogExtension.GetLogger();
-loggerSerialLog.Information("Logging initialized.");
+
+var loggerSerialLog =
+    LogExtension.GetLogger();
+
+loggerSerialLog.Information(
+    "Logging initialized.");
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var mongoInitializer =
-        scope.ServiceProvider.GetRequiredService<MongoDbInitializer>();
+        scope.ServiceProvider
+            .GetRequiredService<MongoDbInitializer>();
 
     await mongoInitializer.InitializeAsync();
 }
@@ -65,6 +78,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
+
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint(
@@ -90,12 +104,15 @@ app.UseAuthorization();
 app.MapControllers();
 
 var runMigrations =
-    builder.Configuration.GetValue<bool>("RunMigrations");
+    builder.Configuration.GetValue<bool>(
+        "RunMigrations");
 
 if (runMigrations)
 {
     using var scope = app.Services.CreateScope();
-    var services = scope.ServiceProvider;
+
+    var services =
+        scope.ServiceProvider;
 
     try
     {
@@ -107,7 +124,8 @@ if (runMigrations)
     catch (Exception ex)
     {
         var logger =
-            services.GetRequiredService<ILogger<Program>>();
+            services.GetRequiredService<
+                ILogger<Program>>();
 
         logger.LogError(
             ex,

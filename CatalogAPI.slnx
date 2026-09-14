@@ -6,6 +6,9 @@
     <File Path="catalog-api-deployment.yaml" />
     <File Path="catalog-api-service.yaml" />
     <File Path="catalog-configmap.yaml" />
+    <File Path="catalog-mongodb-deployment.yaml" />
+    <File Path="catalog-mongodb-pvc.yaml" />
+    <File Path="catalog-mongodb-service.yaml" />
     <File Path="catalog-secret.yaml" />
     <File Path="catalog-sqlserver-deployment.yaml" />
     <File Path="catalog-sqlserver-pvc.yaml" />

@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: catalog-api
-          image: pedroighor2/fcg-catalog-api:1.0
-          imagePullPolicy: Always
+          image: pedroighor2/fcg-catalog-api:1.2
+          imagePullPolicy: IfNotPresent
 
           ports:
             - containerPort: 8080
