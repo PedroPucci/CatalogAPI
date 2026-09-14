@@ -6,6 +6,7 @@ using CatalogAPI.Infrastructure.MongoDB;
 using CatalogAPI.Messaging;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,6 +95,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseRouting();
 
+app.UseHttpMetrics();
+
 app.UseCors("CorsPolicy");
 
 app.UseSession();
@@ -102,6 +105,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapMetrics();
 
 var runMigrations =
     builder.Configuration.GetValue<bool>(
