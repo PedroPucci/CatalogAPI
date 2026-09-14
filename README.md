@@ -272,3 +272,41 @@ http://localhost:8080/swagger
 ```
 
 ---
+---
+
+# Fase 3 — Kubernetes, MongoDB e API Gateway
+
+Na Fase 3, o Catalog API foi integrado ao ambiente de microsserviços executado em Kubernetes através do Minikube.
+
+## MongoDB
+
+O Catalog API passou a utilizar MongoDB para persistência dos dados específicos do catálogo.
+
+Foi implementado:
+
+- `MongoDbContext`;
+- configuração através de `IOptions<MongoDbSettings>`;
+- conexão com MongoDB;
+- coleção `gameCatalog`;
+- índice único para `GameId`;
+- `GameCatalogDocument`;
+- `GameCatalogRepository`;
+- mapeamento entre documento MongoDB e DTO;
+- operações de criação e consulta do catálogo.
+
+Exemplo de documento:
+
+```json
+{
+  "gameId": 2,
+  "genre": "RPG",
+  "developer": "FCG Studio",
+  "publisher": "FCG",
+  "platforms": [
+    "PC"
+  ],
+  "tags": [
+    "rpg",
+    "persistence"
+  ]
+}
