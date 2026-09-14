@@ -274,29 +274,101 @@ http://localhost:8080/swagger
 ---
 ---
 
-# Fase 3 — Kubernetes, MongoDB e API Gateway
+--
 
-Na Fase 3, o Catalog API foi integrado ao ambiente de microsserviços executado em Kubernetes através do Minikube.
+# Fase 3 — Kubernetes, MongoDB e API Gateway
 
 ## MongoDB
 
-O Catalog API passou a utilizar MongoDB para persistência dos dados específicos do catálogo.
+O CatalogAPI foi integrado ao MongoDB para persistência dos dados do catálogo.
 
-Foi implementado:
+Foram implementados:
 
 - `MongoDbContext`;
-- configuração através de `IOptions<MongoDbSettings>`;
-- conexão com MongoDB;
-- coleção `gameCatalog`;
-- índice único para `GameId`;
+- `MongoDbSettings`;
 - `GameCatalogDocument`;
 - `GameCatalogRepository`;
+- índice único para `GameId`;
 - mapeamento entre documento MongoDB e DTO;
 - operações de criação e consulta do catálogo.
 
-Exemplo de documento:
+## Kubernetes
 
-```json
+O CatalogAPI foi configurado para execução no Kubernetes através do Minikube, utilizando o namespace:
+
+```text
+fcg
+
+O ambiente possui integração com:
+
+MongoDB;
+SQL Server;
+RabbitMQ;
+Redis;
+Kong API Gateway.
+Docker
+
+Foi criada e publicada a imagem:
+
+pedroighor2/fcg-catalog-api:1.1
+
+A imagem utiliza a versão 1.0.1 do pacote compartilhado FCG.Contracts.
+
+Kong API Gateway
+
+O CatalogAPI foi integrado ao Kong através da rota:
+
+/catalog
+
+Exemplo:
+
+/catalog/api/game-catalog/2
+
+Fluxo:
+
+Cliente
+   │
+   ▼
+Kong API Gateway
+   │
+   ▼
+CatalogAPI
+   │
+   ▼
+MongoDB
+Autenticação JWT
+
+Foi configurada a validação de JWT no Kong para os endpoints protegidos do CatalogAPI.
+
+Sem token:
+
+Cliente → Kong → 401 Unauthorized
+
+Com JWT válido:
+
+Cliente → Kong → CatalogAPI → dados
+
+A autenticação é realizada através do UsersAPI.
+
+O JWT gerado pelo UsersAPI é enviado no header:
+
+Authorization: Bearer <JWT>
+Validação realizada
+
+Foi validado o acesso ao endpoint:
+
+GET /catalog/api/game-catalog/2
+
+Sem JWT:
+
+401 Unauthorized
+
+Com JWT válido:
+
+200 OK
+
+Retornando os dados do catálogo:
+
 {
   "gameId": 2,
   "genre": "RPG",
@@ -310,3 +382,8 @@ Exemplo de documento:
     "persistence"
   ]
 }
+RabbitMQ
+
+A integração com RabbitMQ/MassTransit foi configurada para publicação do OrderPlacedEvent.
+
+O ambiente Kubernetes possui RabbitMQ configurado, porém a conexão do CatalogAPI com o broker permanece como ponto de investigação da infraestrutura.
