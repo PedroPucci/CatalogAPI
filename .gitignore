@@ -369,3 +369,5 @@ FodyWeavers.xsd
 # Kubernetes Secrets e backups locais
 /k8s/catalog-secret.yaml
 /catalog-secret.local-backup.yaml
+*.backup
+*.pre-eks.backup

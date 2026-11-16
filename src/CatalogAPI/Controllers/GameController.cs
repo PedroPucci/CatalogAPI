@@ -1,10 +1,13 @@
-﻿using CatalogAPI.Application.Abstractions.Persistence;
+using CatalogAPI.Application.Abstractions.Persistence;
 using CatalogAPI.Application.Contracts.Dto.Game;
 using CatalogAPI.Domain.Entities;
 using CatalogAPI.Messaging;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
+using Microsoft.Extensions.Options;
 using System.Net.Mime;
 using System.Security.Claims;
 
@@ -16,14 +19,20 @@ namespace CatalogAPI.Controllers
     public class GameController : ControllerBase
     {
         private readonly IUnitOfWorkService _uow;
+        private readonly IDistributedCache _cache;
+        private readonly JsonSerializerOptions _jsonOptions;
         private readonly OrderPlacedEventPublisher _orderPlacedEventPublisher;
 
         public GameController(
             IUnitOfWorkService uow,
-            OrderPlacedEventPublisher orderPlacedEventPublisher)
+            OrderPlacedEventPublisher orderPlacedEventPublisher,
+            IDistributedCache cache,
+            IOptions<JsonOptions> jsonOptions)
         {
             _uow = uow;
             _orderPlacedEventPublisher = orderPlacedEventPublisher;
+            _cache = cache;
+            _jsonOptions = jsonOptions.Value.JsonSerializerOptions;
         }
 
         [Authorize(Roles = "Administrator")]
@@ -108,6 +117,7 @@ namespace CatalogAPI.Controllers
             if (!result.Success)
                 return NotFound(result);
 
+            await _cache.RemoveAsync($"game:{id}");
             return NoContent();
         }
 
@@ -118,6 +128,7 @@ namespace CatalogAPI.Controllers
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             var result = await _uow.GameService.Delete(id);
+            await _cache.RemoveAsync($"game:{id}");
             return NoContent();
         }
 
@@ -137,7 +148,31 @@ namespace CatalogAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
+            var cacheKey = $"game:{id}";
+
+            var cached = await _cache.GetStringAsync(cacheKey);
+
+            if (!string.IsNullOrEmpty(cached))
+            {
+                return Content(cached, "application/json");
+            }
+
             var result = await _uow.GameService.GetById(id);
+
+            if (result.Success && result.Data is not null)
+            {
+                var json = JsonSerializer.Serialize(result, _jsonOptions);
+
+                await _cache.SetStringAsync(
+                    cacheKey,
+                    json,
+                    new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow =
+                            TimeSpan.FromMinutes(5)
+                    });
+            }
+
             return Ok(result);
         }
     }

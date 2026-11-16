@@ -387,3 +387,8 @@ RabbitMQ
 A integração com RabbitMQ/MassTransit foi configurada para publicação do OrderPlacedEvent.
 
 O ambiente Kubernetes possui RabbitMQ configurado, porém a conexão do CatalogAPI com o broker permanece como ponto de investigação da infraestrutura.
+
+## Fase 4 - Cloud, NoSQL, Cache, Busca Avancada e CI/CD
+
+A evolucao do projeto para a Fase 4 esta documentada
+em [Documentacao da Fase 4](docs/FASE-4.md).

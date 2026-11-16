@@ -1,5 +1,4 @@
-
-name: CatalogAPI CI/CD
+﻿name: CatalogAPI CI/CD
 
 on:
   push:
@@ -57,3 +56,70 @@ jobs:
           file: ./src/CatalogAPI/Dockerfile
           push: false
           tags: fcg-catalog-api:${{ github.sha }}
+
+  publish-ecr:
+    name: Publish to Amazon ECR
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./src/CatalogAPI/Dockerfile
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/fcg-catalog-api:${{ github.sha }}
+
+  deploy-eks:
+    name: Deploy to Amazon EKS
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    needs: publish-ecr
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Configure Kubernetes access
+        run: |
+          aws eks update-kubeconfig \
+            --region "${{ vars.AWS_REGION }}" \
+            --name "${{ vars.EKS_CLUSTER_NAME }}"
+
+      - name: Update Kubernetes Deployment
+        run: |
+          kubectl -n fcg set image \
+            deployment/catalog-api \
+            catalog-api=${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/fcg-catalog-api:${{ github.sha }}
+
+      - name: Verify Rolling Update
+        run: |
+          kubectl -n fcg rollout status \
+            deployment/catalog-api \
+            --timeout=300s
