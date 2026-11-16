@@ -1,11 +1,16 @@
+
 using CatalogAPI.Application.Abstractions.Persistence;
+using CatalogAPI.Application.Abstractions.Search;
 using CatalogAPI.Extensions;
 using CatalogAPI.Extensions.ExtensionsLogs;
 using CatalogAPI.Infrastructure.Connections;
 using CatalogAPI.Infrastructure.MongoDB;
+using CatalogAPI.Infrastructure.Search;
 using CatalogAPI.Messaging;
 using MassTransit;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using OpenSearch.Client;
 using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +21,28 @@ builder.Services.Configure<MongoDbSettings>(
 builder.Services.AddSingleton<MongoDbContext>();
 builder.Services.AddScoped<MongoDbInitializer>();
 builder.Services.AddScoped<IGameCatalogRepository, GameCatalogRepository>();
+
+var openSearchUrl =
+    builder.Configuration["OpenSearch:Url"]
+    ?? throw new InvalidOperationException(
+        "OpenSearch:Url is not configured.");
+
+builder.Services.AddSingleton<IOpenSearchClient>(_ =>
+{
+    var settings = new ConnectionSettings(
+        new Uri(openSearchUrl))
+        .DefaultIndex("game-catalog");
+
+    return new OpenSearchClient(settings);
+});
+
+builder.Services.AddScoped<
+    IGameSearchIndexer,
+    OpenSearchGameIndexer>();
+
+builder.Services.AddScoped<
+    IGameSearchService,
+    OpenSearchGameSearchService>();
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -30,6 +57,8 @@ builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddScoped<OrderPlacedEventPublisher>();
+
+builder.Services.AddHealthChecks();
 
 var rabbitMqHost =
     builder.Configuration["RabbitMq:Host"]
@@ -105,6 +134,20 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks(
+    "/health/live",
+    new HealthCheckOptions
+    {
+        Predicate = _ => false
+    });
+
+app.MapHealthChecks(
+    "/health/ready",
+    new HealthCheckOptions
+    {
+        Predicate = _ => true
+    });
 
 app.MapMetrics();
 

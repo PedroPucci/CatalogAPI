@@ -1,3 +1,4 @@
+
 services:
   catalogapi:
     build:
@@ -16,76 +17,105 @@ services:
 
       RunMigrations: "true"
 
-      ConnectionStrings__WebApiDatabase: "Server=catalog-sqlserver,1433;Database=FCGGameCatalog;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False;"
+      ConnectionStrings__WebApiDatabase: "Server=catalog-sqlserver,1433;Database=FCGGameCatalog;User Id=sa;Password=${SQLSERVER_PASSWORD:?Configure SQLSERVER_PASSWORD};TrustServerCertificate=True;Encrypt=False;"
 
-      MongoDbSettings__ConnectionString: "mongodb://root:YourStrongMongoPass@catalog-mongodb:27017/?authSource=admin"
+      MongoDbSettings__ConnectionString: "mongodb://root:${MONGO_PASSWORD:?Configure MONGO_PASSWORD}@catalog-mongodb:27017/?authSource=admin"
       MongoDbSettings__DatabaseName: "FCGGameCatalogMongo"
 
+      Redis__ConnectionString: "catalog-redis:6379"
+
+      OpenSearch__Url: "http://catalog-opensearch:9200"
+
       RabbitMq__Host: "host.docker.internal"
-      RabbitMq__Username: "guest"
-      RabbitMq__Password: "guest"
+      RabbitMq__Username: "${RABBITMQ_USERNAME:-guest}"
+      RabbitMq__Password: "${RABBITMQ_PASSWORD:?Configure RABBITMQ_PASSWORD}"
 
       JwtSettings__Issuer: "PedroIghor"
       JwtSettings__Audience: "https://localhost:5001"
-      JwtSettings__SecretKey: "EAA4Cf4JnqYwBP9MSZC8cHvMSvmShHZBU27qQxZBS3ORNSoIdEz3me0QHZABLNBiEWtDmVLZBVeMF8QZCd"
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY:?Configure JWT_SECRET_KEY}"
       JwtSettings__ExpirationInMinutes: "60"
 
     depends_on:
-      catalog-sqlserver:
+      catalog-redis:
         condition: service_healthy
 
-      catalog-mongodb:
-        condition: service_started
+      catalog-opensearch:
+        condition: service_healthy
+
+    networks:
+      - default
+      - legacy
 
     restart: unless-stopped
 
-
-  catalog-sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: catalog-sqlserver
+  catalog-redis:
+    image: redis:7-alpine
+    container_name: catalog-redis
 
     ports:
-      - "1434:1433"
-
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_PID: "Developer"
-      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+      - "127.0.0.1:6379:6379"
 
     volumes:
-      - catalog_sqlserver_data:/var/opt/mssql
+      - catalog_redis_data:/data
+
+    command: redis-server --appendonly yes
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - default
+
+    restart: unless-stopped
+
+  catalog-opensearch:
+    image: opensearchproject/opensearch:3.9.0
+    container_name: catalog-opensearch
+
+    environment:
+      discovery.type: "single-node"
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+
+    ports:
+      - "127.0.0.1:9201:9200"
+
+    volumes:
+      - catalog_opensearch_data:/usr/share/opensearch/data
 
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"
+          "curl -fsS http://localhost:9200/ >/dev/null || exit 1"
         ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 45s
+
+    networks:
+      - default
 
     restart: unless-stopped
-
-
-  catalog-mongodb:
-    image: mongo:8
-    container_name: catalog-mongodb
-
-    ports:
-      - "27017:27017"
-
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: YourStrongMongoPass
-
-    volumes:
-      - catalog_mongodb_data:/data/db
-
-    restart: unless-stopped
-
 
 volumes:
-  catalog_sqlserver_data:
-  catalog_mongodb_data:
+  catalog_redis_data:
+    external: true
+    name: catalogapi_catalog_redis_data
+
+  catalog_opensearch_data:
+    external: true
+    name: catalogapi_catalog_opensearch_data
+
+networks:
+  default:
+    name: catalogapi_default
+
+  legacy:
+    external: true
+    name: dockercompose9992594990462220109_default

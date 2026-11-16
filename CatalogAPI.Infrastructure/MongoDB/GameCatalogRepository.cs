@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿
+using System.Text.Json;
 using CatalogAPI.Application.Abstractions.Persistence;
 using CatalogAPI.Application.Contracts.Dto.GameCatalog;
 using CatalogAPI.Application.Contracts.DomainErrors;
@@ -40,9 +41,8 @@ namespace CatalogAPI.Infrastructure.MongoDB
             {
                 await _collection.InsertOneAsync(document);
 
-                var cacheKey = GetCacheKey(catalog.GameId);
-
-                await _cache.RemoveAsync(cacheKey);
+                await _cache.RemoveAsync(
+                    GetCacheKey(catalog.GameId));
 
                 await _cache.RemoveAsync(
                     GetAllCacheKey());
@@ -129,6 +129,37 @@ namespace CatalogAPI.Infrastructure.MongoDB
                 cacheOptions);
 
             return catalogs;
+        }
+
+        public async Task<bool> UpdateAsync(
+            int gameId,
+            GameCatalogDto catalog)
+        {
+            var filter = Builders<GameCatalogDocument>
+                .Filter.Eq(x => x.GameId, gameId);
+
+            var update = Builders<GameCatalogDocument>
+                .Update
+                .Set(x => x.Genre, catalog.Genre)
+                .Set(x => x.Developer, catalog.Developer)
+                .Set(x => x.Publisher, catalog.Publisher)
+                .Set(x => x.Platforms, catalog.Platforms)
+                .Set(x => x.Tags, catalog.Tags);
+
+            var result = await _collection.UpdateOneAsync(
+                filter,
+                update);
+
+            if (result.MatchedCount == 0)
+                return false;
+
+            await _cache.RemoveAsync(
+                GetCacheKey(gameId));
+
+            await _cache.RemoveAsync(
+                GetAllCacheKey());
+
+            return true;
         }
 
         private static GameCatalogDto MapToDto(

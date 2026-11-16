@@ -5,7 +5,13 @@ namespace CatalogAPI.Application.Abstractions.Persistence
     public interface IGameCatalogRepository
     {
         Task AddAsync(GameCatalogDto document);
+
         Task<GameCatalogDto?> GetByGameIdAsync(int gameId);
+
         Task<List<GameCatalogDto>> GetAllAsync();
+
+        Task<bool> UpdateAsync(
+            int gameId,
+            GameCatalogDto document);
     }
 }

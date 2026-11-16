@@ -5,7 +5,7 @@ namespace CatalogAPI.Application.Abstractions.Persistence
     public class UnitOfWorkService : IUnitOfWorkService
     {
         private readonly IRepositoryUoW _repositoryUoW;
-        private GameService gameService;
+        private GameService? _gameService;
 
         public UnitOfWorkService(IRepositoryUoW repositoryUoW)
         {
@@ -16,9 +16,12 @@ namespace CatalogAPI.Application.Abstractions.Persistence
         {
             get
             {
-                if (gameService is null)
-                    gameService = new GameService(_repositoryUoW);
-                return gameService;
+                if (_gameService is null)
+                {
+                    _gameService = new GameService(_repositoryUoW);
+                }
+
+                return _gameService;
             }
         }
     }

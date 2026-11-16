@@ -1,17 +1,27 @@
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: catalog-api
   namespace: fcg
 spec:
-  replicas: 1
+  replicas: 2
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
   selector:
     matchLabels:
       app: catalog-api
+
   template:
     metadata:
       labels:
         app: catalog-api
+
     spec:
       containers:
         - name: catalog-api
@@ -38,8 +48,9 @@ spec:
 
           readinessProbe:
             httpGet:
-              path: /swagger/index.html
+              path: /health/ready
               port: 8080
+              scheme: HTTP
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -47,8 +58,9 @@ spec:
 
           livenessProbe:
             httpGet:
-              path: /swagger/index.html
+              path: /health/live
               port: 8080
+              scheme: HTTP
             initialDelaySeconds: 60
             periodSeconds: 20
             timeoutSeconds: 5

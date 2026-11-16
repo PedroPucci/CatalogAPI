@@ -13,6 +13,7 @@
     <File Path="catalog-sqlserver-deployment.yaml" />
     <File Path="catalog-sqlserver-pvc.yaml" />
     <File Path="catalog-sqlserver-service.yaml" />
+    <File Path="k8s/catalog-api-deployment.yaml" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="CatalogAPI.Application/CatalogAPI.Application.csproj" Id="a57fa235-5af5-45ad-844d-a62e9a0c664f" />
