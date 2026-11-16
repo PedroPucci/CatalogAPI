@@ -361,3 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Arquivos locais com credenciais
+.env
+.env.*
+!.env.example
+
+# Kubernetes Secrets e backups locais
+/k8s/catalog-secret.yaml
+/catalog-secret.local-backup.yaml
