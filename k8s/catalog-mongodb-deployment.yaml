@@ -24,7 +24,14 @@ spec:
               value: "root"
 
             - name: MONGO_INITDB_ROOT_PASSWORD
-              value: "YourStrongMongoPass"
+
+              valueFrom:
+
+                secretKeyRef:
+
+                  name: catalog-api-secret
+
+                  key: MONGO_INITDB_ROOT_PASSWORD"
 
           volumeMounts:
             - name: mongodb-data
