@@ -1,4 +1,5 @@
-﻿using CatalogAPI.Application.Abstractions.Persistence;
+﻿
+using CatalogAPI.Application.Abstractions.Persistence;
 using CatalogAPI.Application.Abstractions.Repositories;
 using CatalogAPI.Application.Contracts.Dto;
 using CatalogAPI.Application.Contracts.Dto.Game;
@@ -23,10 +24,18 @@ namespace CatalogAPI.Tests.Services
             _gameRepositoryMock = new Mock<IGameRepository>();
             _userGameRepositoryMock = new Mock<IUserGameRepository>();
 
-            _repositoryUoWMock.Setup(x => x.GameRepository)
+            var transactionMock = new Mock<IDbContextTransaction>();
+
+            _repositoryUoWMock
+                .Setup(x => x.BeginTransaction())
+                .Returns(transactionMock.Object);
+
+            _repositoryUoWMock
+                .Setup(x => x.GameRepository)
                 .Returns(_gameRepositoryMock.Object);
 
-            _repositoryUoWMock.Setup(x => x.UserGameRepository)
+            _repositoryUoWMock
+                .Setup(x => x.UserGameRepository)
                 .Returns(_userGameRepositoryMock.Object);
 
             _gameService = new GameService(_repositoryUoWMock.Object);
@@ -44,10 +53,6 @@ namespace CatalogAPI.Tests.Services
             _gameRepositoryMock
                 .Setup(x => x.Add(It.IsAny<GameEntity>()))
                 .ReturnsAsync((GameEntity game) => game);
-
-            _userGameRepositoryMock
-                .Setup(x => x.Add(It.IsAny<UserGameEntity>()))
-                .ReturnsAsync((UserGameEntity userGame) => userGame);
 
             _repositoryUoWMock
                 .Setup(x => x.SaveAsync())
@@ -67,15 +72,32 @@ namespace CatalogAPI.Tests.Services
             result.Data.Should().NotBeNull();
             result.Data!.Name.Should().Be(gameResponse.Name);
 
-            _gameRepositoryMock.Verify(x => x.Add(It.IsAny<GameEntity>()), Times.Once);
-            _userGameRepositoryMock.Verify(x => x.Add(It.IsAny<UserGameEntity>()), Times.Once);
-            _repositoryUoWMock.Verify(x => x.SaveAsync(), Times.Exactly(2));
-            transactionMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _gameRepositoryMock.Verify(
+                x => x.Add(It.IsAny<GameEntity>()),
+                Times.Once);
+
+            _userGameRepositoryMock.Verify(
+                x => x.Add(It.IsAny<UserGameEntity>()),
+                Times.Never);
+
+            _repositoryUoWMock.Verify(
+                x => x.SaveAsync(),
+                Times.Once);
+
+            transactionMock.Verify(
+                x => x.CommitAsync(It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         [Fact]
         public async Task Add_Should_Return_Error_When_Game_Is_Invalid()
         {
+            var transactionMock = new Mock<IDbContextTransaction>();
+
+            _repositoryUoWMock
+                .Setup(x => x.BeginTransaction())
+                .Returns(transactionMock.Object);
+
             var gameResponse = new CreateGameRequestDto
             {
                 Name = "",
@@ -86,8 +108,17 @@ namespace CatalogAPI.Tests.Services
 
             result.Success.Should().BeFalse();
 
-            _gameRepositoryMock.Verify(x => x.Add(It.IsAny<GameEntity>()), Times.Never);
-            _userGameRepositoryMock.Verify(x => x.Add(It.IsAny<UserGameEntity>()), Times.Never);
+            _gameRepositoryMock.Verify(
+                x => x.Add(It.IsAny<GameEntity>()),
+                Times.Never);
+
+            _userGameRepositoryMock.Verify(
+                x => x.Add(It.IsAny<UserGameEntity>()),
+                Times.Never);
+
+            transactionMock.Verify(
+                x => x.RollbackAsync(It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         [Fact]
@@ -127,9 +158,17 @@ namespace CatalogAPI.Tests.Services
             result.Success.Should().BeTrue();
             result.Data.Should().BeTrue();
 
-            _gameRepositoryMock.Verify(x => x.Update(It.IsAny<GameEntity>()), Times.Once);
-            _repositoryUoWMock.Verify(x => x.SaveAsync(), Times.Once);
-            transactionMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _gameRepositoryMock.Verify(
+                x => x.Update(It.IsAny<GameEntity>()),
+                Times.Once);
+
+            _repositoryUoWMock.Verify(
+                x => x.SaveAsync(),
+                Times.Once);
+
+            transactionMock.Verify(
+                x => x.CommitAsync(It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         [Fact]
@@ -142,15 +181,21 @@ namespace CatalogAPI.Tests.Services
                 IsActive = true
             };
 
-            _gameRepositoryMock.Setup(x => x.GetById(1))
+            _gameRepositoryMock
+                .Setup(x => x.GetById(1))
                 .ReturnsAsync((GameEntity?)null);
 
             var result = await _gameService.Update(1, updateDto);
 
             result.Success.Should().BeFalse();
 
-            _gameRepositoryMock.Verify(x => x.Update(It.IsAny<GameEntity>()), Times.Never);
-            _repositoryUoWMock.Verify(x => x.SaveAsync(), Times.Never);
+            _gameRepositoryMock.Verify(
+                x => x.Update(It.IsAny<GameEntity>()),
+                Times.Never);
+
+            _repositoryUoWMock.Verify(
+                x => x.SaveAsync(),
+                Times.Never);
         }
 
         [Fact]
@@ -183,9 +228,17 @@ namespace CatalogAPI.Tests.Services
             result.Success.Should().BeTrue();
             game.IsActive.Should().BeFalse();
 
-            _gameRepositoryMock.Verify(x => x.Update(game), Times.Once);
-            _repositoryUoWMock.Verify(x => x.SaveAsync(), Times.Once);
-            transactionMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _gameRepositoryMock.Verify(
+                x => x.Update(game),
+                Times.Once);
+
+            _repositoryUoWMock.Verify(
+                x => x.SaveAsync(),
+                Times.Once);
+
+            transactionMock.Verify(
+                x => x.CommitAsync(It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         [Fact]
@@ -205,9 +258,17 @@ namespace CatalogAPI.Tests.Services
 
             result.Success.Should().BeFalse();
 
-            _gameRepositoryMock.Verify(x => x.Update(It.IsAny<GameEntity>()), Times.Never);
-            _repositoryUoWMock.Verify(x => x.SaveAsync(), Times.Never);
-            transactionMock.Verify(x => x.Rollback(), Times.Once);
+            _gameRepositoryMock.Verify(
+                x => x.Update(It.IsAny<GameEntity>()),
+                Times.Never);
+
+            _repositoryUoWMock.Verify(
+                x => x.SaveAsync(),
+                Times.Never);
+
+            transactionMock.Verify(
+                x => x.Rollback(),
+                Times.Once);
         }
 
         [Fact]
@@ -224,7 +285,8 @@ namespace CatalogAPI.Tests.Services
                 }
             };
 
-            _gameRepositoryMock.Setup(x => x.Get())
+            _gameRepositoryMock
+                .Setup(x => x.Get())
                 .ReturnsAsync(games);
 
             var result = await _gameService.Get();
@@ -233,13 +295,16 @@ namespace CatalogAPI.Tests.Services
             result.Should().HaveCount(1);
             result.First().Name.Should().Be("God of War");
 
-            _gameRepositoryMock.Verify(x => x.Get(), Times.Once);
+            _gameRepositoryMock.Verify(
+                x => x.Get(),
+                Times.Once);
         }
 
         [Fact]
         public async Task Get_Should_Return_Empty_List_When_No_Games_Exist()
         {
-            _gameRepositoryMock.Setup(x => x.Get())
+            _gameRepositoryMock
+                .Setup(x => x.Get())
                 .ReturnsAsync(new List<GameResponseDto>());
 
             var result = await _gameService.Get();
@@ -247,7 +312,9 @@ namespace CatalogAPI.Tests.Services
             result.Should().NotBeNull();
             result.Should().BeEmpty();
 
-            _gameRepositoryMock.Verify(x => x.Get(), Times.Once);
+            _gameRepositoryMock.Verify(
+                x => x.Get(),
+                Times.Once);
         }
 
         [Fact]
@@ -261,7 +328,8 @@ namespace CatalogAPI.Tests.Services
                 IsActive = true
             };
 
-            _gameRepositoryMock.Setup(x => x.GetById(1))
+            _gameRepositoryMock
+                .Setup(x => x.GetById(1))
                 .ReturnsAsync(game);
 
             var result = await _gameService.GetById(1);
@@ -271,7 +339,9 @@ namespace CatalogAPI.Tests.Services
             result.Data!.Name.Should().Be(game.Name);
             result.Data.Description.Should().Be(game.Description);
 
-            _gameRepositoryMock.Verify(x => x.GetById(1), Times.Once);
+            _gameRepositoryMock.Verify(
+                x => x.GetById(1),
+                Times.Once);
         }
 
         [Fact]
@@ -291,8 +361,13 @@ namespace CatalogAPI.Tests.Services
 
             result.Success.Should().BeFalse();
 
-            _gameRepositoryMock.Verify(x => x.GetById(1), Times.Once);
-            transactionMock.Verify(x => x.Rollback(), Times.Once);
+            _gameRepositoryMock.Verify(
+                x => x.GetById(1),
+                Times.Once);
+
+            transactionMock.Verify(
+                x => x.Rollback(),
+                Times.Once);
         }
     }
 }
